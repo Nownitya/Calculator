@@ -21,16 +21,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.nowni.calculator.ui.component.ArithmeticButton
-import com.nowni.calculator.ui.component.NumberButton
+import com.nowni.calculator.ui.component.CalculatorButton
 
-/**
- * Composable function that represents the main screen of the calculator application.
- * It displays the calculator display and the calculator buttons.
- * It also handles the logic for button clicks and updates the display accordingly.
- *
- * @param modifier The modifier to be applied to the composable.
- */
+
 @Composable
 fun CalculatorHome(modifier: Modifier = Modifier) {
 
@@ -40,86 +33,42 @@ fun CalculatorHome(modifier: Modifier = Modifier) {
     Column(
         modifier = modifier
             .fillMaxSize()
-            .padding(16.dp),
-        verticalArrangement = Arrangement.Bottom,
+            .padding(horizontal = 16.dp, vertical = 8.dp),
+        verticalArrangement = Arrangement.SpaceBetween
     ) {
-        CalculatorDisplay(
-            text = displayText, modifier = Modifier
+        CalculatorDisplay(text = displayText, modifier = Modifier
+            .weight(1f)
+            .fillMaxWidth())
+        CalculatorButtonPanel(
+            onButtonClick = { btn ->
+                displayText = when (btn) {
+                    "AC" -> "0"
+                    "DEL" -> if (displayText == "Error") "0" else displayText.dropLast(1)
+                        .ifEmpty { "0" }
+
+                    "=" -> calculateResult(displayText, operators)
+                    else -> handleInput(btn, displayText, operators)
+                }
+            },
+            modifier = Modifier
                 .fillMaxWidth()
-                .weight(1f)
+                .weight(1.5f)
         )
-
-        Box(
-            contentAlignment = Alignment.BottomCenter, modifier = Modifier
-                .fillMaxWidth()
-                .weight(2f)
-        ) {
-            CalculatorButtons(
-                onButtonClick = { btn ->
-                    displayText = when (btn) {
-                        "AC" -> "0"
-                        "DEL" -> displayText.dropLast(1).ifEmpty { "0" }
-                        "=" -> {
-                            val lastChar = displayText.lastOrNull()
-                            if (lastChar in operators.map { it[0] } || lastChar == '.') {
-                                displayText
-                            } else {
-                                try {
-                                    val result = evaluate(displayText)
-                                    if (result == result.toLong().toDouble()) result.toLong()
-                                        .toString() else result.toString()
-
-
-                                } catch (e: Exception) {
-                                    "Error"
-                                }
-                            }
-
-                        }
-
-                        "." -> {
-                            val segments = displayText.split(*operators.toTypedArray().map { it[0] }
-                                .toCharArray())
-                            if (!segments.last().contains(".")) {
-                                "$displayText."
-                            } else {
-                                displayText
-                            }
-                        }/*in operators -> {
-                            val lastChar = displayText.lastOrNull()
-                            if (lastChar!= null && lastChar !in operators.map { it[0] } && lastChar !='.') displayText+btn else displayText
-
-                        }*/
-                        else -> if (displayText == "0") btn else displayText + btn
-                    }
-                }, modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(bottom = 5.dp)
-            )
-        }
     }
-
 }
 
 
-/**
- * Displays the current text on the calculator screen.
- *
- * This composable shows the input or the result of calculations.
- * The font size of the displayed text adjusts based on its length to fit within the display area.
- * If the text is "Error", it is displayed in the error color.
- *
- * @param text The text to display on the calculator screen.
- * @param modifier [Modifier] to be applied to the layout of the display.
- */
 @Composable
-fun CalculatorDisplay(text: String, modifier: Modifier = Modifier) {
+fun CalculatorDisplay(
+    text: String, modifier: Modifier = Modifier
+) {
     Box(
         modifier = modifier
             .padding(horizontal = 16.dp, vertical = 8.dp)
             .fillMaxWidth()
             .heightIn(min = 80.dp),
-        contentAlignment = Alignment.CenterEnd,
+        contentAlignment = Alignment.CenterEnd
+
     ) {
         Text(
             text = text,
@@ -128,24 +77,115 @@ fun CalculatorDisplay(text: String, modifier: Modifier = Modifier) {
                 text.length > 8 -> 42.sp
                 else -> 48.sp
             },
-            color = if (text == "Error") MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface,
-            maxLines = 1,
+            color = if (text.equals(
+                    "error",
+                    ignoreCase = true
+                )
+            ) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface,
+            maxLines = 2,
             overflow = TextOverflow.Ellipsis,
             style = MaterialTheme.typography.displayMedium
-
         )
     }
 }
 
-/**
- * Composable function that displays the calculator buttons.
- *
- * @param onButtonClick Lambda function to be invoked when a button is clicked.
- * @param modifier Optional [Modifier] for customizing the layout of the button grid.
- */
+fun calculateResult(expr: String, operators: List<String>): String {
+    return if (expr.lastOrNull() in operators.map { it[0] } || expr.lastOrNull() == '.') {
+        expr
+    } else {
+        try {
+            val result = evaluate(expr)
+            if (result % 1 == 0.0) {
+                result.toLong().toString()
+            } else {
+                result.toString()
+            }
+        } catch (_: Exception) {
+            "Error"
+        }
+    }
+}
+
+
+fun handleInput(btn: String, current: String, operators: List<String>): String {
+    return when {
+        current == "Error" -> handleErrorState(btn)
+        btn == "." -> handleDecimal(current)
+        btn in operators -> handleOperator(btn, current)
+        else -> handleNumber(btn, current)
+    }
+
+}
+
+private fun handleErrorState(btn: String) = when (btn) {
+    "." -> "0."
+    in listOf("+", "-", "/", "%") -> "0"
+    "-" -> "-"
+    else -> btn
+}
+
+
+private fun handleDecimal(current: String): String {
+
+    val lastOperatorIndex = current.indexOfLast { it in "+-*/%" }
+    val currentNumber =
+        if (lastOperatorIndex == -1) current else current.substring(lastOperatorIndex + 1)
+    return when {
+        current == "0" -> "0."
+        currentNumber.isEmpty() -> "${current}0."
+        currentNumber.contains('.') -> current
+        else -> "${current}."
+    }
+}
+
+private fun handleOperator(btn: String, current: String): String {
+    if (current == "0") {
+        return if (btn == "-") "-" else "0"
+    }
+
+    val lastChar = current.lastOrNull()
+    val length = current.length
+
+    // Check for operator followed by '-'
+    if (length >= 2) {
+        val secondLastChar = current[length - 2]
+        if (lastChar == '-' && secondLastChar in "+*/%") {
+            return when {
+                btn == "-" -> current // Prevent triple operators
+                else -> current.dropLast(2) + btn
+            }
+        }
+    }
+
+    return when {
+            lastChar!= null && lastChar in "+*/%" -> {
+            when (btn) {
+                "-" -> "$current-"
+                else -> current.dropLast(1) + btn
+            }
+        }
+
+        lastChar == '-' -> {
+            if (length >= 2 && current[length - 2] in "+*/%") {
+                // Replace operator followed by '-'
+                current.dropLast(2) + btn
+            } else {
+                // Regular subtraction replacement
+                current.dropLast(1) + btn
+            }
+        }
+
+        else -> "$current$btn"
+    }
+}
+
+private fun handleNumber(btn: String, current: String) =
+    if (current == "0") btn else "${current}${btn}"
+
 @Composable
-fun CalculatorButtons(
-    onButtonClick: (String) -> Unit, modifier: Modifier = Modifier
+fun CalculatorButtonPanel(
+    onButtonClick: (String) -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     val keys = listOf(
         listOf("AC", "DEL", "%", "/"),
@@ -156,56 +196,38 @@ fun CalculatorButtons(
     )
 
     Column(
-        modifier = modifier, verticalArrangement = Arrangement.spacedBy(8.dp), content = {
-            keys.forEach { row ->
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    content = {
-                        row.forEach { label ->
-                            val weightVal = if (label == "=") 2f else 1f
-                            val btnModifier =
-                                Modifier
-                                    .weight(weightVal)
-                                    .aspectRatio(if (label == "=") 2f else 1f)
-                            when (label) {
-                                "AC", "DEL", "+", "-", "*", "/", "%", ".", "=" -> ArithmeticButton(
-                                    onclick = { onButtonClick(label) },
-                                    text = label,
-                                    modifier = btnModifier
-                                )
+        modifier = modifier.fillMaxSize(),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        keys.forEach { row ->
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                row.forEach { label ->
+                    val weight = when (label) {
+                        "=" -> 2f
+                        else -> 1f
+                    }
+                    CalculatorButton(
+                        onClick = { onButtonClick(label) },
+                        modifier = Modifier
+                            .weight(weight)
+                            .aspectRatio(if (label == "=") 2f else 1f),
+                        text = label,
+                        fontSize = if (label in listOf(
+                                "AC", "DEL", "%", "/", "*", "-", "+", "="
+                            )
+                        ) 16.sp else 20.sp
 
-                                else -> NumberButton(
-                                    onclick = { onButtonClick(label) },
-                                    text = label.toIntOrNull() ?: 0,
-                                    modifier = btnModifier
-                                )
-
-                            }
-
-
-                        }
-                    })
+                    )
+                }
             }
-        })
-
+        }
+    }
 }
 
 
-/**
- * Evaluates a mathematical expression represented as a string.
- * This function supports basic arithmetic operations: addition (+), subtraction (-),
- * multiplication (*), division (/), and modulo (%). It handles positive and negative numbers,
- * as well as decimal values.
- *
- * The evaluation follows the standard order of operations (multiplication, division, modulo
- * before addition and subtraction).
- *
- * @param expr The mathematical expression string to evaluate.
- * @return The result of the evaluation as a Double.
- * @throws NumberFormatException if the input string contains invalid number formats.
- * @throws ArithmeticException if a division by zero occurs.
- */
 fun evaluate(expr: String): Double {
     var index = 0
 
@@ -219,7 +241,6 @@ fun evaluate(expr: String): Double {
             index++
         }
         return expr.substring(start, index).toDouble()
-
     }
 
     fun parseTerm(): Double {
@@ -245,7 +266,6 @@ fun evaluate(expr: String): Double {
             }
         }
         return value
-
     }
 
     fun parseExpression(): Double {
@@ -266,7 +286,6 @@ fun evaluate(expr: String): Double {
             }
         }
         return value
-
     }
     return parseExpression()
 }
