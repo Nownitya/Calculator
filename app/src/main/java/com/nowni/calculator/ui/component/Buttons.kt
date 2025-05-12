@@ -25,7 +25,7 @@ fun CalculatorButton(
     fontSize: TextUnit = 20.sp
 ) {
     Button(
-        onClick = onClick,
+        onClick = { onClick()},
         modifier = modifier
     ) {
         Text(text = text, fontSize = fontSize)
