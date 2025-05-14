@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -19,6 +20,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.nowni.calculator.ui.component.CalculatorButton
@@ -36,9 +38,11 @@ fun CalculatorHome(modifier: Modifier = Modifier) {
             .padding(horizontal = 16.dp, vertical = 8.dp),
         verticalArrangement = Arrangement.SpaceBetween
     ) {
-        CalculatorDisplay(text = displayText, modifier = Modifier
-            .weight(1f)
-            .fillMaxWidth())
+        CalculatorDisplay(
+            text = displayText, modifier = Modifier
+                .weight(1f)
+                .fillMaxWidth()
+        )
         CalculatorButtonPanel(
             onButtonClick = { btn ->
                 displayText = when (btn) {
@@ -158,7 +162,7 @@ private fun handleOperator(btn: String, current: String): String {
     }
 
     return when {
-            lastChar!= null && lastChar in "+*/%" -> {
+        lastChar != null && lastChar in "+*/%" -> {
             when (btn) {
                 "-" -> "$current-"
                 else -> current.dropLast(1) + btn
@@ -288,4 +292,15 @@ fun evaluate(expr: String): Double {
         return value
     }
     return parseExpression()
+}
+
+@Preview
+@Composable
+private fun CalculatorHomePreview() {
+    MaterialTheme {
+        Surface {
+            CalculatorHome()
+        }
+    }
+
 }

@@ -12,12 +12,7 @@ import androidx.compose.ui.Modifier
 import com.nowni.calculator.ui.screens.CalculatorHome
 import com.nowni.calculator.ui.theme.CalculatorTheme
 
-/**
- * The main activity for the Calculator application.
- *
- * This activity sets up the main screen of the application using Jetpack Compose.
- * It utilizes a [Scaffold] to provide basic Material Design structure and displays the [CalculatorHome] composable.
- */
+
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
