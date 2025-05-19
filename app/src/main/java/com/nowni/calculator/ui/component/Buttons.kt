@@ -24,16 +24,6 @@ import com.nowni.calculator.ui.theme.CalculatorTheme
 //import androidx.compose.runtime.getValue
 
 
-/**
- * A composable function that represents a button used in a calculator.
- *
- * This button displays a given text and triggers an action when clicked.
- *
- * @param onClick The lambda function to be executed when the button is clicked.
- * @param modifier A [Modifier] to be applied to the button. Defaults to [Modifier].
- * @param text The text to be displayed on the button.
- * @param fontSize The size of the text on the button. Defaults to 20.sp.
- */
 //@Composable
 //fun CalculatorButton(
 //    text: String,
