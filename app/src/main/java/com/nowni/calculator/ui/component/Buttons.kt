@@ -63,8 +63,8 @@ fun CalculatorButton(
     color: Color = MaterialTheme.colorScheme.secondaryContainer,
     elevation: Dp = 10.dp,
 ) {
-    val interactionSource = remember { MutableInteractionSource() }
-    val isPressed by interactionSource.collectIsPressedAsState()
+    val interactionSource = remember { MutableInteractionSource() }     // Create a MutableInteractionSource. This is used to track the interaction state of the button.
+    val isPressed by interactionSource.collectIsPressedAsState()        // Collect the state of the interaction. This will be true when the button is pressed.
 
     val darkShadow = Color(0xFF202020)
     val lightShadow = Color(0xFF3C3C3C)
@@ -72,11 +72,11 @@ fun CalculatorButton(
         onClick = { onClick() },
         modifier = modifier
             .shadow(
-                elevation = if (isPressed) 0.dp else elevation,
-                MaterialTheme.shapes.large,
-                clip = false,
-                ambientColor = lightShadow,
-                spotColor = darkShadow
+                elevation = if (isPressed) 0.dp else elevation,     // elevation for the pressed state
+                shape = MaterialTheme.shapes.large,     // shape of the button
+                clip = true,        // clip the shape to the bounds of the button. This ensures that the shadow is not drawn outside of the button.
+                ambientColor = lightShadow,     // shadow color for the ambient state
+                spotColor = darkShadow          // shadow color for the pressed state
             ),
         elevation= ButtonDefaults.buttonElevation(0.dp),
         colors = ButtonDefaults.buttonColors(
