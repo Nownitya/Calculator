@@ -1,6 +1,8 @@
 package com.nowni.calculator.ui.screens
 
 
+import androidx.compose.animation.animateContentSize
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -10,10 +12,12 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -27,6 +31,7 @@ import androidx.compose.ui.unit.sp
 import com.nowni.calculator.ui.component.CalculatorButton
 import com.nowni.calculator.ui.theme.CalculatorTheme
 import net.objecthunter.exp4j.ExpressionBuilder
+import java.util.Locale
 
 
 @Composable
@@ -91,6 +96,11 @@ fun CalculatorDisplay(
             .heightIn(min = 80.dp), contentAlignment = Alignment.CenterEnd
 
     ) {
+        val scrollState = rememberScrollState()
+        LaunchedEffect(text) {
+            scrollState.animateScrollTo(scrollState.maxValue)
+        }
+
         Text(
             text = text,
             fontSize = when {
@@ -102,9 +112,13 @@ fun CalculatorDisplay(
                     "error", ignoreCase = true
                 )
             ) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface,
-            maxLines = 2,
-            overflow = TextOverflow.Ellipsis,
-            style = MaterialTheme.typography.displayMedium
+            maxLines = 1,
+            overflow = TextOverflow.Visible,
+            style = MaterialTheme.typography.displayMedium,
+            modifier = Modifier
+                .horizontalScroll(scrollState)      // <-- enables scrolling
+                .padding(2.dp)
+                .animateContentSize()       //  Smooth animation of the text size when it changes.
         )
     }
 }
@@ -172,9 +186,11 @@ private fun handleClear(
 ) {
     if (isResult || current == "Error") {
         onStateChange("0", false)
+    } else if (current.length == 1) {
+        onStateChange("0", false)
     } else {
-        val newText = current.dropLast(1).ifEmpty { "0" }
-        onStateChange(newText, newText == "0")
+        val newText = current.dropLast(1)
+        onStateChange(newText, false)
     }
 }
 
@@ -221,11 +237,7 @@ private fun findLastNumberRange(expression: String): IntRange? {
 
         if (currentChar.isDigit() || currentChar == '.') {
             startIndex--
-        } else if (currentChar == '-' && (
-                    startIndex == 0 ||
-                            previousChar == null ||
-                            previousChar in "+-×÷%"
-                    )) {
+        } else if (currentChar == '-' && (startIndex == 0 || previousChar == null || previousChar in "+-×÷%")) {
             // Unary minus part of number
             startIndex--
             break
@@ -258,13 +270,20 @@ private fun handleInput(btn: String, current: String): String {
         current == "Error" -> btn
         btn == "." -> handleDecimal(current)
         btn in listOf("+", "-", "×", "÷", "%") -> handleOperator(btn, current)
-        else -> handleNumberOrParenthesis(btn, current)
+        else -> handleNumberInput(btn, current)
     }
 }
 
-private fun handleDecimal(current: String): String {
-    val parts = current.split(Regex("[-+×÷%]"))
-    return if (parts.lastOrNull()?.contains('.') == true) current else "$current."
+private fun handleDecimal(current: String): String {/*val parts = current.split(Regex("[-+×÷%]"))
+    return if (parts.lastOrNull()?.contains('.') == true) current else "$current."*/
+    val parts = current.split(Regex("[-+×÷%]")).lastOrNull() ?: ""
+
+    return when {
+        parts.isEmpty() -> "${current}0."
+        parts.contains('.') -> current
+        parts.last().isDigit() -> "$current."
+        else -> "$current${0}."
+    }
 }
 
 private fun handleOperator(btn: String, current: String): String {
@@ -277,9 +296,11 @@ private fun handleOperator(btn: String, current: String): String {
     }
 }
 
-private fun handleNumberOrParenthesis(btn: String, current: String): String {
+private fun handleNumberInput(btn: String, current: String): String {
     return when {
         current == "0" && btn != "." -> btn
+//        current.endsWith("0.") && btn == "0" -> current
+        current.endsWith(".0") && btn == "0" -> current
         else -> "$current$btn"
     }
 }
@@ -292,7 +313,8 @@ fun calculateResult(expression: String): String {
         if (result % 1 == 0.0) {
             result.toLong().toString()
         } else {
-            "0.6f".format(result).trimEnd('0').trimEnd('.')
+            String.format(Locale("en", "IN"), "%.6f", result).trimEnd('0').trimEnd('.')
+//            "0.6f".format(result).trimEnd('0').trimEnd('.')
         }
     } catch (_: Exception) {
         "Error"

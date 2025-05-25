@@ -21,39 +21,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.nowni.calculator.ui.theme.CalculatorTheme
 
-//import androidx.compose.runtime.getValue
-
-
-//@Composable
-//fun CalculatorButton(
-//    text: String,
-//    onClick: () -> Unit,
-//    modifier: Modifier = Modifier,
-//    fontSize: TextUnit = 20.sp,
-//    color: Color = MaterialTheme.colorScheme.secondaryContainer,
-//    elevation: Dp = 10.dp,
-//) {
-//    Button(
-//        onClick = { onClick() },
-//        modifier = modifier,
-//        elevation = ButtonDefaults.buttonElevation(
-//            defaultElevation = elevation,
-//            pressedElevation = 10.dp / 2,
-//            disabledElevation = 0.dp
-//        ),
-//        colors = ButtonDefaults.buttonColors(
-//            containerColor = color,
-//            contentColor = MaterialTheme.colorScheme.onPrimary
-//        ),
-//        shape = MaterialTheme.shapes.large
-//    ) {
-//        Text(
-//            text = text, fontSize = fontSize,
-//            modifier = Modifier.padding(2.dp)
-//        )
-//    }
-//}
-
 @Composable
 fun CalculatorButton(
     text: String,
